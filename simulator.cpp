@@ -71,11 +71,12 @@ void dcf_mac_protocol(struct packet *packet_out,int no){
   int _max = packet_out[0].new_time;
   for(int i = 0;i < no; i++){
     packet_out[i].sequence = i;
-    std::cout << packet_out[i].new_time << " XXXX " << _max << std::endl;
+    // std::cout << packet_out[i].new_time << " XXXX " << _max << std::endl;
     while(packet_out[i].new_time <= _max  && i < no){
-       packet_out[i].sequence = i;
+
       if(!sent_flag[i]){
-        std::cout << "HEEEEEEEEEEEEEEEEEE " << std::endl;
+        packet_out[i].sequence = i;
+        //std::cout << "HEEEEEEEEEEEEEEEEEE " << std::endl;
         printf("Time: %d, Node %d waiting for DIFS\n",packet_out[i].new_time,packet_out[i].pkt_id);
         packet_out[i].dcf_time = packet_out[i].new_time + DIFS;
         if(packet_out[i].slots == -1){
@@ -97,14 +98,17 @@ void dcf_mac_protocol(struct packet *packet_out,int no){
         }
       }
       i++;
-      if(i == no) break;
+      if(i == no) {
+        i = i -1;
+        break;
+      }
 
     }
-    std::cout <<"max " <<  _max << std::endl;
+    //std::cout <<"max " <<  _max << std::endl;
     std::sort(dcf_wait_list.begin(), dcf_wait_list.end(), [](struct packet left, struct packet right) { return (left.back_off_time) < (right.back_off_time);});
     // checking the sending and collision
     int back_up_size = dcf_wait_list.size(); // make backup
-    std::cout << back_up_size <<"  xxx " << std::endl;
+    //std::cout << back_up_size <<"  xxx " << std::endl;
 
     if(dcf_wait_list.size() == 1){
       printf("Time: %d, Node %d finished waiting for DIFS and started waiting for %d slots \n",dcf_wait_list[0].dcf_time, dcf_wait_list[0].pkt_id, dcf_wait_list[0].slots);
@@ -116,12 +120,12 @@ void dcf_mac_protocol(struct packet *packet_out,int no){
       if(no > 1){
         _max = packet_out[1].new_time;
       }
-       std::cout << "MAX 2 " << _max << std::endl;
+      //std::cout << "MAX 2 " << _max << std::endl;
        i = i -1;
       continue;
     }else{
       bool _collision = false;
-      std::cout << " HERE " << dcf_wait_list.size() << std::endl;
+      //std::cout << " HERE " << dcf_wait_list.size() << std::endl;
       for(size_t ii = 1; ii < dcf_wait_list.size(); ii++){
 
         while(dcf_wait_list[ii].back_off_time ==  dcf_wait_list[0].back_off_time&& ii < dcf_wait_list.size()){
@@ -141,14 +145,14 @@ void dcf_mac_protocol(struct packet *packet_out,int no){
           _collision = true; // collision detedte;
         }
         if(!_collision){
-          std::cout << "NO COLLISION " <<std::endl;
+          //std::cout << "NO COLLISION " <<std::endl;
           printf("Time: %d, Node %d finished waiting for DIFS and started waiting for %d slots \n",dcf_wait_list[0].dcf_time, dcf_wait_list[0].pkt_id, dcf_wait_list[0].slots);
           printf("Time: %d, Node %d finished waiting and is ready to send the packet \n",dcf_wait_list[0].back_off_time , dcf_wait_list[0].pkt_id);
           printf("Time: %d, Node %d send %d \n",dcf_wait_list[0].end_time, dcf_wait_list[0].pkt_id, dcf_wait_list[0].pkt_size);
           // update the following information: new_time = dcf_wait_list[0].end_time + 1;
 
           for(size_t j = 1; j < dcf_wait_list.size(); j++){
-            std::cout << dcf_wait_list[j].sequence <<"SSSS " << std::endl;
+            //std::cout << dcf_wait_list[j].sequence <<" SSSS " << std::endl;
             dcf_wait_list[j].new_time = dcf_wait_list[0].end_time + 1;
             _max = dcf_wait_list[0].end_time + 1;
             if(dcf_wait_list[j].back_off_time - dcf_wait_list[0].back_off_time < dcf_wait_list[j].slots){
@@ -163,7 +167,7 @@ void dcf_mac_protocol(struct packet *packet_out,int no){
       }
       for(size_t j = 0; j < dcf_wait_list.size(); j++){
         packet_out[dcf_wait_list[j].sequence] = dcf_wait_list[j];
-        std::cout << dcf_wait_list.size() << " " << dcf_wait_list[j].new_time << " XYZ " <<dcf_wait_list[j].sequence<< std::endl;
+        //std::cout <<i << " " <<  dcf_wait_list.size() << " " << dcf_wait_list[j].new_time << " XYZ " <<dcf_wait_list[j].sequence<< std::endl;
       }
          dcf_wait_list.erase(dcf_wait_list.begin());
       std::vector<packet>().swap(dcf_wait_list);
