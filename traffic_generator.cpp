@@ -26,11 +26,11 @@ private:
   int time;
 public:
   Package_line(int pi, int sn, int dn, int ps, int t): pkt_id(pi), src_node(sn), dst_node(dn), pkt_size(ps), time(t){}
-  int get_pkt_id(){return pkt_id;}
-  int get_src_node(){return src_node;}
-  int get_dst_node(){return dst_node;}
-  int get_pkt_size(){return pkt_size;};
-  int get_time(){return time;};
+  const int get_pkt_id() const {return pkt_id;}
+  const int get_src_node() const {return src_node;}
+  const int get_dst_node() const {return dst_node;}
+  const int get_pkt_size()const {return pkt_size;};
+  const int get_time()const {return time;};
   void print_line(){
     std::cout << pkt_id << " " << src_node << " " << dst_node << " " << pkt_size << " " << time << std::endl;
   }
@@ -45,23 +45,25 @@ int main(int argc, char *argv[]){
   std::mt19937 gen1(seed);
 
   int num_node = atoi(argv[1]);
-  int pkt_size_average = atoi(argv[2]); // average package size
+  int pkt_size_average = atoi(argv[2]);
   double offered_load = atof(argv[3]);
   int num_pkts_per_node = atoi(argv[4]);
-  std::string distribution_type(argv[5]); //pass the distribution type
+  std::string distribution_type(argv[5]);
+
   int gap = int((pkt_size_average * num_node)/offered_load + 0.5) - pkt_size_average; // compute the gap
   std::vector<Package_line> traffic_file; //store the
   traffic_file.reserve(10000); //reserve some space for the vector
+  std::uniform_int_distribution<> dis(0, gap * 2); //unifrom distribution [0, 2 * gap]
+  std::uniform_int_distribution<> dis2(0, num_node-1);
+
   std::exponential_distribution<> package_exp1((1.0/pkt_size_average)); //make the expection is pkt_size_average
   std::uniform_int_distribution<> package_uni(1, 2 * pkt_size_average); //unifrom distribution [100, 2 * gap]
 
-  std::uniform_int_distribution<> dis(0, gap * 2); //unifrom distribution [0, 2 * gap]
-  std::uniform_int_distribution<> dis2(0, num_node-1);
   for(int i = 0 ; i < num_node; i++){
     int last = 0;
     for(int j = 0; j < num_pkts_per_node; j++){
       int pkt_id = i * num_pkts_per_node + j;
-      int src_node = i, pkt_size =100;
+      int src_node = i, pkt_size = 100;
       int dst_node, time;
       if(argc == 7){
         time = last + dis(gen1);
@@ -79,10 +81,10 @@ int main(int argc, char *argv[]){
         }else if(distribution_type == "uniform"){
           pkt_size = package_uni(gen);
         }
+
       }
       if(dst_node >= i) dst_node += 1;
       last = time;
-
       Package_line pl(pkt_id, src_node, dst_node, pkt_size, time);
       traffic_file.push_back(pl);
     }
@@ -90,7 +92,9 @@ int main(int argc, char *argv[]){
 
   std::ofstream output;
   output.open("traffic_file", std::ios::out);
-  std::sort(traffic_file.begin(), traffic_file.end(), [](Package_line & one, Package_line & two){return one.get_time() < two.get_time();});
+
+//	std::sort(traffic_file.begin(), traffic_file.end(), Compare_line);
+  std::sort(traffic_file.begin(), traffic_file.end(), [](const Package_line & one, const Package_line & two){return one.get_time() < two.get_time();});
   output << traffic_file.size() << std::endl;
   for(size_t i = 0; i < traffic_file.size() ;i++){
     //traffic_file[i].print_line();
