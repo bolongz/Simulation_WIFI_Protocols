@@ -116,10 +116,10 @@ void dcf_mac_protocol(struct packet *packet_out,int no){
       printf("Time: %d, Node %d send %d \n",dcf_wait_list[0].end_time, dcf_wait_list[0].pkt_id, dcf_wait_list[0].pkt_size);
 
       sent_flag[dcf_wait_list[0].sequence] = true;
-      std::vector<packet>().swap(dcf_wait_list);
       if(no > 1){
-        _max = packet_out[1].new_time;
+        _max = packet_out[dcf_wait_list[0].sequence + 1].new_time;
       }
+      std::vector<packet>().swap(dcf_wait_list);
       //std::cout << "MAX 2 " << _max << std::endl;
        i = i -1;
       continue;
