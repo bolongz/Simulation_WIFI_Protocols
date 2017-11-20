@@ -155,8 +155,10 @@ void dcf_mac_protocol(struct packet *packet_out,int no){
             //std::cout << dcf_wait_list[j].sequence <<" SSSS " << std::endl;
             dcf_wait_list[j].new_time = dcf_wait_list[0].end_time + 1;
             _max = dcf_wait_list[0].end_time + 1;
-            if(dcf_wait_list[j].back_off_time - dcf_wait_list[0].back_off_time < dcf_wait_list[j].slots){
+            if(dcf_wait_list[j].back_off_time - dcf_wait_list[0].back_off_time < SLOT * dcf_wait_list[j].slots){
               dcf_wait_list[j].slots = (dcf_wait_list[j].back_off_time - dcf_wait_list[0].back_off_time);
+            }else{
+              dcf_wait_list[j].slots = -1;
             }
           }
           sent_flag[dcf_wait_list[0].sequence] = true;
