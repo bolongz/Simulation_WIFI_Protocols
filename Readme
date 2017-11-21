@@ -1,5 +1,5 @@
 # Simulation_WIFI_Protocols
-This is the project 2 for the Data comm class. We have two programs for this project: traffic_geneorator and simulator.
+This is the project 3s for the Data comm class. We have two programs for this project: traffic_geneorator and simulator.
 
 1. Type "make" to compile the file
 
@@ -7,8 +7,9 @@ This is the project 2 for the Data comm class. We have two programs for this pro
 
    Run syntax is as following:
 
-       ./traffic_generator num_node pkt_size offered_load num_pkts_per_node [seed] method
-       the methods you can choice are exp and uniform
+       ./traffic_generator num_node pkt_size offered_load num_pkts_per_node method [seed]
+       For the "method" parameter:  you can choice are exp and uniform
+       [seed] is optional
 
 3. For simulator, we implemented 2 simulators: dcf protocol and rts protocol.
    ./simulator dcf filesname: to run the dcf protocol

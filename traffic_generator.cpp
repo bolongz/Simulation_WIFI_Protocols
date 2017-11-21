@@ -1,4 +1,4 @@
-/* Project 2 for Data comm */
+/* Project 3 for Data comm */
 /* Traffic Generator */
 /* Written by Bolong Zhang & Bowen Li */
 
@@ -42,13 +42,20 @@ int main(int argc, char *argv[]){
   if(argc == 7){
     seed = atoi(argv[6]);
   }
+  if(argc < 6){
+    std::cout << "You have to input a distribution type for the package size: exp or uniform" << std::endl;
+    exit(1);
+  }
   std::mt19937 gen1(seed);
-
   int num_node = atoi(argv[1]);
   int pkt_size_average = atoi(argv[2]);
   double offered_load = atof(argv[3]);
   int num_pkts_per_node = atoi(argv[4]);
   std::string distribution_type(argv[5]);
+  if(distribution_type != "exp" and distribution_type != "uniform"){
+    std::cout << "You have to input a distribution type for the package size: exp or uniform" << std::endl;
+    exit(1);
+  }
 
   int gap = int((pkt_size_average * num_node)/offered_load + 0.5) - pkt_size_average; // compute the gap
   std::vector<Package_line> traffic_file; //store the
