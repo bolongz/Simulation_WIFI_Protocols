@@ -56,7 +56,7 @@ void convert_int (char *strLine,struct packet * packet_out) {
     packet_out->time=atoi(packet_out_temp.time);
     packet_out->new_time = packet_out->time;
     packet_out->trans_time = int(packet_out->pkt_size / SPEED + 0.5) + 44 + 10;
-    
+
 }
 
 int random_int(int s, int e){
@@ -68,15 +68,16 @@ void dcf_mac_protocol(struct packet *packet_out,int no){
     printf("%d\n",no);
     int temp=0;
     int temp1=0;
-    int fraction=0;
+    //int fraction=0;
     //int time1=0;
     int size1=0;
-    bool last_sent =  false;
+    //    bool last_sent =  false;
+    int end_time;
     std::vector<packet>  dcf_wait_list, final_wait_list;
     std::vector<packet>  back_up;
     std::vector<bool> sent_flag(no,0);
     std::vector<int> vector_index;
-    
+
     int _max = packet_out[0].new_time;
     for(int i = 0;i < no; i++){
         int diff = 0, jj = 0;
@@ -117,18 +118,19 @@ void dcf_mac_protocol(struct packet *packet_out,int no){
                 i = i -1;
                 break;
             }
-            
+
         }
-        
+
         std::sort(dcf_wait_list.begin(), dcf_wait_list.end(), [](struct packet left, struct packet right) { return (left.back_off_time) < (right.back_off_time);});
         int back_up_size = dcf_wait_list.size() + diff; // make backup
         if (back_up_size == 0) break;
-        
+
         if(dcf_wait_list.size() == 1){
             printf("Time: %d, Node %d finished waiting for DIFS and started waiting for %d slots \n",dcf_wait_list[0].dcf_time, dcf_wait_list[0].pkt_id, dcf_wait_list[0].slots);
             printf("Time: %d, Node %d finished waiting and is ready to send the packet \n",dcf_wait_list[0].back_off_time, dcf_wait_list[0].pkt_id);
             printf("Time: %d, Node %d send %d \n",dcf_wait_list[0].end_time, dcf_wait_list[0].pkt_id, dcf_wait_list[0].pkt_size);
             temp++;
+            end_time = dcf_wait_list[0].end_time;
             size1=size1+dcf_wait_list[0].pkt_size;
             sent_flag[dcf_wait_list[0].sequence] = true;
             if(no > 1){
@@ -149,14 +151,14 @@ void dcf_mac_protocol(struct packet *packet_out,int no){
         }else{
             bool _collision = false;
             for(size_t ii = 1; ii < dcf_wait_list.size(); ii++){
-                
+
                 while(dcf_wait_list[ii].back_off_time ==  dcf_wait_list[0].back_off_time&& ii < dcf_wait_list.size()){
                     if( ii == 1){
                         dcf_wait_list[0].repeat += 1;
                         dcf_wait_list[0].collision = true;
                         dcf_wait_list[0].slots = -1; //random_int(0, 32 * dcf_wait_list[0].repeat);
                     }
-                    
+
                     dcf_wait_list[ii].repeat += 1;
                     dcf_wait_list[ii].collision = true;
                     dcf_wait_list[ii].slots = -1; //random_int(0, 32 * dcf_wait_list[i].repeat);
@@ -168,13 +170,14 @@ void dcf_mac_protocol(struct packet *packet_out,int no){
                     printf("Time: %d, Node %d finished waiting for DIFS and started waiting for %d slots \n",dcf_wait_list[0].dcf_time, dcf_wait_list[0].pkt_id, dcf_wait_list[0].slots);
                     printf("Time: %d, Node %d finished waiting and is ready to send the packet \n",dcf_wait_list[0].back_off_time , dcf_wait_list[0].pkt_id);
                     printf("Time: %d, Node %d send %d \n",dcf_wait_list[0].end_time, dcf_wait_list[0].pkt_id, dcf_wait_list[0].pkt_size);
+                    end_time = dcf_wait_list[0].end_time;
                     temp++;
                     size1=size1+dcf_wait_list[0].pkt_size;
                     sent_flag[dcf_wait_list[0].sequence] = true;
                     for(size_t j = 1; j < dcf_wait_list.size(); j++){
                         if(dcf_wait_list[j].new_time < dcf_wait_list[0].end_time)
                             dcf_wait_list[j].new_time = dcf_wait_list[0].end_time;
-                        
+
                         _max = dcf_wait_list[0].end_time ;
                         if(dcf_wait_list[j].back_off_time - dcf_wait_list[0].back_off_time < SLOT * dcf_wait_list[j].slots){
                             dcf_wait_list[j].slots = dcf_wait_list[j].slots-((dcf_wait_list[0].back_off_time - dcf_wait_list[j].dcf_time))/9;
@@ -187,37 +190,38 @@ void dcf_mac_protocol(struct packet *packet_out,int no){
             }
             for(size_t j = 0; j < dcf_wait_list.size(); j++){
                 packet_out[dcf_wait_list[j].sequence] = dcf_wait_list[j];
-                
+
             }
             std::vector<packet>().swap(dcf_wait_list);
         }
         i = i - back_up_size -1;
     }
-    
-    
-    printf("%d %d %d %d\n",temp,temp1,size1,packet_out[no-1].end_time);
-    int throughput=(size1*1000)/packet_out[no-1].end_time;
-    float fra=(float)((float)(size1/6)+temp*ACM)/packet_out[no-1].end_time;
-    int lantency=packet_out[no-1].end_time/temp1;
+
+
+    printf("%d %d %d %d\n",temp,temp1,size1,end_time);
+    int throughput=(size1*1000)/end_time;
+    float fra=(float)(float(size1)/6+temp*ACM)/end_time;
+    int lantency=end_time/temp;
     printf("Throughput=%d kbps\n",throughput);
     printf("Fraction=%lf\n",fra);
     printf("Lantency=%d\n",lantency);
-    
-    
+
+
 }
 void rts_mac_protocol(struct packet *packet_out,int no){
     //printf("%d\n",no);
     int temp=0;
     int temp1=0;
-    int fraction=0;
+    //int fraction=0;
     //int time1=0;
     int size1=0;
-    bool last_sent =  false;
+    int end_time;
+    //bool last_sent =  false;
     std::vector<packet>  dcf_wait_list, final_wait_list;
     std::vector<packet>  back_up;
     std::vector<bool> sent_flag(no,0);
     std::vector<int> vector_index;
-    
+
     int _max = packet_out[0].new_time;
     for(int i = 0;i < no; i++){
         int diff = 0, jj = 0;
@@ -261,19 +265,20 @@ void rts_mac_protocol(struct packet *packet_out,int no){
                 i = i -1;
                 break;
             }
-            
+
         }
-        
+
         std::sort(dcf_wait_list.begin(), dcf_wait_list.end(), [](struct packet left, struct packet right) { return (left.back_off_time) < (right.back_off_time);});
         int back_up_size = dcf_wait_list.size() + diff; // make backup
         if (back_up_size == 0) break;
-        
+
         if(dcf_wait_list.size() == 1){
             printf("Time: %d, Node %d finished waiting for DIFS and started waiting for %d slots \n",dcf_wait_list[0].dcf_time, dcf_wait_list[0].pkt_id, dcf_wait_list[0].slots);
             printf("Time: %d, Node %d finished waiting and is ready to send the RTS \n",dcf_wait_list[0].back_off_time, dcf_wait_list[0].pkt_id);
             printf("Time: %d, Node %d finished waiting and is ready to receive the CTS \n",dcf_wait_list[0].rts_time, dcf_wait_list[0].pkt_id);
             printf("Time: %d, Node %d finished waiting and is ready to send the packet \n",dcf_wait_list[0].cts_time, dcf_wait_list[0].pkt_id);
             printf("Time: %d, Node %d send %d \n",dcf_wait_list[0].end_time, dcf_wait_list[0].pkt_id, dcf_wait_list[0].pkt_size);
+            end_time = dcf_wait_list[0].end_time;
             temp++;
             size1=size1+dcf_wait_list[0].pkt_size;
             sent_flag[dcf_wait_list[0].sequence] = true;
@@ -295,14 +300,14 @@ void rts_mac_protocol(struct packet *packet_out,int no){
         }else{
             bool _collision = false;
             for(size_t ii = 1; ii < dcf_wait_list.size(); ii++){
-                
+
                 while(dcf_wait_list[ii].back_off_time ==  dcf_wait_list[0].back_off_time&& ii < dcf_wait_list.size()){
                     if( ii == 1){
                         dcf_wait_list[0].repeat += 1;
                         dcf_wait_list[0].collision = true;
                         dcf_wait_list[0].slots = -1; //random_int(0, 32 * dcf_wait_list[0].repeat);
                     }
-                    
+
                     dcf_wait_list[ii].repeat += 1;
                     dcf_wait_list[ii].collision = true;
                     dcf_wait_list[ii].slots = -1; //random_int(0, 32 * dcf_wait_list[i].repeat);
@@ -316,13 +321,14 @@ void rts_mac_protocol(struct packet *packet_out,int no){
                     printf("Time: %d, Node %d finished waiting and is ready to receive the CTS \n",dcf_wait_list[0].rts_time, dcf_wait_list[0].pkt_id);
                     printf("Time: %d, Node %d finished waiting and is ready to send the packet \n",dcf_wait_list[0].cts_time , dcf_wait_list[0].pkt_id);
                     printf("Time: %d, Node %d send %d \n",dcf_wait_list[0].end_time, dcf_wait_list[0].pkt_id, dcf_wait_list[0].pkt_size);
+                    end_time = dcf_wait_list[0].end_time;
                     temp++;
                     size1=size1+dcf_wait_list[0].pkt_size;
                     sent_flag[dcf_wait_list[0].sequence] = true;
                     for(size_t j = 1; j < dcf_wait_list.size(); j++){
                         if(dcf_wait_list[j].new_time < dcf_wait_list[0].end_time)
                             dcf_wait_list[j].new_time = dcf_wait_list[0].end_time;
-                        
+
                         _max = dcf_wait_list[0].end_time ;
                         if(dcf_wait_list[j].back_off_time - dcf_wait_list[0].back_off_time < SLOT * dcf_wait_list[j].slots){
                             dcf_wait_list[j].slots = dcf_wait_list[j].slots-((dcf_wait_list[0].back_off_time - dcf_wait_list[j].dcf_time))/9;
@@ -335,18 +341,18 @@ void rts_mac_protocol(struct packet *packet_out,int no){
             }
             for(size_t j = 0; j < dcf_wait_list.size(); j++){
                 packet_out[dcf_wait_list[j].sequence] = dcf_wait_list[j];
-                
+
             }
             std::vector<packet>().swap(dcf_wait_list);
         }
         i = i - back_up_size -1;
     }
-    
-    
-    printf("%d %d %d %d\n",temp,temp1,size1,packet_out[no-1].end_time);
-    int throughput=(size1*1000)/packet_out[no-1].end_time;
-    float fra=(float)((float)(size1/6)+temp*(ACM+60))/packet_out[no-1].end_time;
-    int lantency=packet_out[no-1].end_time/temp;
+
+
+    printf("%d %d %d %d\n",temp,temp1,size1,end_time);
+    int throughput=(size1*1000)/end_time;
+    float fra=(float)(float(size1)/6+temp*(ACM+60))/end_time;
+    int lantency=end_time/temp;
     printf("Throughput=%d kbps\n",throughput);
     printf("Fraction=%lf\n",fra);
     printf("Latency=%d\n",lantency);
@@ -361,7 +367,7 @@ int main(int argc, char *argv[]) {
         std::string name(argv[2]);
         file_name = name;
     }else{
-        file_name = "datae";
+        file_name = "data";
     }
     struct packet packte_out[100010];
     char strLine[1024];
@@ -392,5 +398,3 @@ int main(int argc, char *argv[]) {
     }
     return 0;
 }
-
-
